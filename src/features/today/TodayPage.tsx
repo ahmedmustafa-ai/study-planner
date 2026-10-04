@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Brain, CalendarClock, ClipboardPaste, CalendarPlus, ChevronDown, ChevronRight, ChevronUp, FilePlus2, FolderPlus, HardDriveDownload, ListPlus, Settings, SlidersHorizontal, Sparkles } from 'lucide-react';
-import { setSetting } from '@/lib/db';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { Brain, CalendarClock, ClipboardPaste, CalendarPlus, ChevronDown, ChevronRight, ChevronUp, ExternalLink, FilePlus2, FolderPlus, HardDriveDownload, ListPlus, Megaphone, Settings, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { db, setSetting } from '@/lib/db';
 import { useSetting, useSubjectMap } from '@/lib/hooks';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -38,6 +39,7 @@ export function TodayPage() {
   const layout = useMemo(() => normalizeLayout(saved), [saved]);
   const [customize, setCustomize] = useState(false);
   const [editing, setEditing] = useState<CalItem | null>(null);
+  const recentAnnouncements = useLiveQuery(() => db.announcements.orderBy('date').reverse().limit(5).toArray(), []) ?? [];
 
   const t0 = d?.t0 ?? '';
   const todayItems = useMemo(() => (calSrc && t0 ? filterItems(buildCalendarItems(calSrc, t0, t0), cal.filter) : []), [calSrc, t0, cal.filter]);
@@ -202,6 +204,31 @@ export function TodayPage() {
         )}
       </Section>
     ),
+
+    announcements: () =>
+      recentAnnouncements.length === 0 ? null : (
+        <Section title="Classroom announcements" action={<Link to="/classroom" className={linkClass}>All →</Link>}>
+          <ul className="divide-y rounded-lg border bg-card">
+            {recentAnnouncements.map((a) => (
+              <li key={a.id} className="flex items-start gap-3 px-3 py-2.5">
+                <Megaphone className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs text-muted-foreground mb-0.5">
+                    {a.courseName || (subjectMap.get(a.subjectId)?.name ?? 'Classroom')} · {a.date}
+                  </div>
+                  <div className="text-sm leading-snug line-clamp-2">{a.text}</div>
+                  {a.url && (
+                    <a href={a.url} target="_blank" rel="noopener noreferrer"
+                      className="mt-1 inline-flex items-center gap-1 text-xs text-brand hover:underline">
+                      Open in Classroom <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      ),
   };
 
   return (

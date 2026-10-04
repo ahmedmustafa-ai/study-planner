@@ -1,5 +1,5 @@
 // Home dashboard layout — which sections show, in what order. Pure.
-export type HomeSectionId = 'quick' | 'nudges' | 'schedule' | 'priorities' | 'studying' | 'vocab' | 'deadlines';
+export type HomeSectionId = 'quick' | 'nudges' | 'schedule' | 'priorities' | 'studying' | 'vocab' | 'deadlines' | 'announcements';
 
 export interface HomeSection {
   id: HomeSectionId;
@@ -14,9 +14,10 @@ export const HOME_SECTION_INFO: Record<HomeSectionId, { label: string; hint: str
   studying: { label: 'Studying now', hint: 'Your Now topics' },
   vocab: { label: 'Vocab due', hint: 'Terms to review today' },
   deadlines: { label: 'Coming up', hint: 'Exams and deadlines in the next weeks' },
+  announcements: { label: 'Classroom announcements', hint: 'Latest posts from your Google Classroom courses' },
 };
 
-export const DEFAULT_HOME_LAYOUT: HomeSection[] = (['quick', 'nudges', 'schedule', 'priorities', 'studying', 'vocab', 'deadlines'] as HomeSectionId[]).map((id) => ({
+export const DEFAULT_HOME_LAYOUT: HomeSection[] = (['quick', 'nudges', 'schedule', 'priorities', 'studying', 'vocab', 'deadlines', 'announcements'] as HomeSectionId[]).map((id) => ({
   id,
   visible: true,
 }));
