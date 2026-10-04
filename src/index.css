@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Design language: quiet workspace (Notion-like).
+  Warm off-white canvas, ink text, hairline borders, no shadows.
+  Color is scarce: one soft blue accent + muted pastel tags for meaning only.
+*/
+@layer base {
+  :root {
+    --background: 60 20% 98%;
+    --foreground: 45 8% 20%;
+    --card: 0 0% 100%;
+    --card-foreground: 45 8% 20%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 45 8% 20%;
+    --primary: 45 8% 20%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 60 9% 94%;
+    --secondary-foreground: 45 8% 20%;
+    --muted: 60 9% 94%;
+    --muted-foreground: 45 3% 46%;
+    --accent: 45 8% 93%;
+    --accent-foreground: 45 8% 20%;
+    --destructive: 3 63% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 60 6% 90%;
+    --input: 45 6% 84%;
+    --ring: 209 76% 51%;
+    --brand: 209 68% 42%;
+    --radius: 0.5rem;
+
+    /* Tags: pastel background + readable ink */
+    --tag-gray-bg: #efeeec;   --tag-gray-fg: #5e5c57;
+    --tag-red-bg: #fdebec;    --tag-red-fg: #9f2f2d;
+    --tag-orange-bg: #faebdd; --tag-orange-fg: #b75e00;
+    --tag-yellow-bg: #fbf3db; --tag-yellow-fg: #956400;
+    --tag-green-bg: #edf3ec;  --tag-green-fg: #346538;
+    --tag-blue-bg: #e1f3fe;   --tag-blue-fg: #1f6c9f;
+    --tag-purple-bg: #f6f3f9; --tag-purple-fg: #6940a5;
+    --tag-pink-bg: #faf1f5;   --tag-pink-fg: #ad1a72;
+  }
+  .dark {
+    --background: 0 0% 10%;
+    --foreground: 60 5% 90%;
+    --card: 0 0% 12.5%;
+    --card-foreground: 60 5% 90%;
+    --popover: 0 0% 12.5%;
+    --popover-foreground: 60 5% 90%;
+    --primary: 60 5% 90%;
+    --primary-foreground: 0 0% 10%;
+    --secondary: 0 0% 17%;
+    --secondary-foreground: 60 5% 90%;
+    --muted: 0 0% 17%;
+    --muted-foreground: 45 2% 62%;
+    --accent: 0 0% 17%;
+    --accent-foreground: 60 5% 90%;
+    --destructive: 3 60% 60%;
+    --destructive-foreground: 0 0% 10%;
+    --border: 0 0% 19%;
+    --input: 0 0% 25%;
+    --ring: 209 76% 60%;
+    --brand: 209 72% 66%;
+
+    --tag-gray-bg: #2f2f2f;   --tag-gray-fg: #b4b4b0;
+    --tag-red-bg: #4a2a28;    --tag-red-fg: #f0a19c;
+    --tag-orange-bg: #4a3220; --tag-orange-fg: #e8b07a;
+    --tag-yellow-bg: #40371f; --tag-yellow-fg: #e3c26c;
+    --tag-green-bg: #233a2a;  --tag-green-fg: #8fcb9a;
+    --tag-blue-bg: #1f3444;   --tag-blue-fg: #8fc1e3;
+    --tag-purple-bg: #35294a; --tag-purple-fg: #bfa2e3;
+    --tag-pink-bg: #452838;   --tag-pink-fg: #e8a3c6;
+  }
+
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    -webkit-tap-highlight-color: transparent;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  ::selection {
+    background: hsl(var(--ring) / 0.25);
+  }
+  /* Date inputs follow the theme */
+  .dark input[type='date'] {
+    color-scheme: dark;
+  }
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

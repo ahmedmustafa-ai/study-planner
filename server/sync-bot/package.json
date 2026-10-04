@@ -1,0 +1,25 @@
+{
+  "name": "study-planner-sync-bot",
+  "version": "1.0.0",
+  "description": "Background sync daemon for Google Classroom and Telegram updates",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "auth": "node dist/auth.js",
+    "bot": "node dist/index.js",
+    "sync-once": "node dist/sync-once.js",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "google-auth-library": "^9.15.1",
+    "googleapis": "^144.0.0",
+    "grammy": "^1.35.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

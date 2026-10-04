@@ -1,0 +1,8 @@
+# Dependencies
+node_modules
+dist
+
+# Secrets and local user state
+.env
+tokens.json
+sync-state.json

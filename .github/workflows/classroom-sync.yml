@@ -1,0 +1,58 @@
+name: Classroom to Telegram Auto-Sync
+
+on:
+  schedule:
+    # Runs every 15 minutes automatically
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions tab anytime
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server/sync-bot
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Cache the sync state file between workflow runs so duplicate notifications are avoided
+      - name: Restore sync state cache
+        uses: actions/cache@v4
+        id: sync-cache
+        with:
+          path: server/sync-bot/sync-state.json
+          key: sync-state-${{ github.run_id }}
+          restore-keys: |
+            sync-state-
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/sync-bot/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile TypeScript
+        run: npm run build
+
+      - name: Run Classroom Sync
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+        run: npm run sync-once
+
+      # Save state back into GitHub Cache
+      - name: Save sync state cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: server/sync-bot/sync-state.json
+          key: sync-state-${{ github.run_id }}
