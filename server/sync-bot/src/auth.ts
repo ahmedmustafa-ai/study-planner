@@ -1,4 +1,5 @@
 import http from 'node:http';
+import path from 'node:path';
 import { URL } from 'node:url';
 import { OAuth2Client } from 'google-auth-library';
 import { config, CLASSROOM_SCOPES } from './config.js';
@@ -113,13 +114,22 @@ export async function performInteractiveAuth(): Promise<void> {
   });
 }
 
-// If executed directly with `tsx src/auth.ts` or `npm run auth`
-performInteractiveAuth()
-  .then(() => {
-    console.log('Authentication complete. You can now run "npm run bot".');
-    process.exit(0);
-  })
-  .catch((err) => {
-    console.error('Authentication failed:', err.message);
-    process.exit(1);
-  });
+// Only run interactive auth when executed directly (e.g. `npm run auth`)
+import { fileURLToPath } from 'node:url';
+
+const isMainModule = () => {
+  if (!process.argv[1]) return false;
+  return fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+};
+
+if (isMainModule()) {
+  performInteractiveAuth()
+    .then(() => {
+      console.log('Authentication complete. You can now run "npm run bot".');
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error('Authentication failed:', err.message);
+      process.exit(1);
+    });
+}

@@ -4,6 +4,13 @@ import { loadTokens } from './storage.js';
 import { performSync } from './sync.js';
 
 async function runOnce() {
+  // Hard safety timeout of 45 seconds to guarantee process exits cleanly
+  const timeout = setTimeout(() => {
+    console.error('⏱️ Sync cycle timed out after 45 seconds.');
+    process.exit(1);
+  }, 45000);
+  timeout.unref?.();
+
   console.log('🔄 Study Planner — Executing scheduled Classroom sync...');
 
   const tokens = loadTokens();
@@ -22,9 +29,11 @@ async function runOnce() {
     console.log(`   - Updated assignments: ${summary.updatedAssignments}`);
     console.log(`   - New materials: ${summary.newMaterials}`);
     console.log(`   - New announcements: ${summary.newAnnouncements}`);
+    clearTimeout(timeout);
     process.exit(0);
   } catch (err: any) {
     console.error('❌ Sync cycle error:', err.message || err);
+    clearTimeout(timeout);
     process.exit(1);
   }
 }
