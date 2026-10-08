@@ -10,6 +10,7 @@ export async function addTask(p: {
   source?: TaskSource;
   materialIds?: number[];
   links?: string[];
+  subtasks?: import('@/lib/types').Subtask[];
 }) {
   const title = p.title.trim();
   if (!title) return;
@@ -23,6 +24,7 @@ export async function addTask(p: {
     source: p.source ?? 'manual',
     materialIds: p.materialIds?.length ? p.materialIds : undefined,
     links: p.links?.length ? p.links : undefined,
+    subtasks: p.subtasks?.length ? p.subtasks : undefined,
   });
   await touchTopic(p.topicId);
 }

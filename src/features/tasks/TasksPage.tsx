@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Check, ExternalLink, Paperclip, Plus, Upload } from 'lucide-react';
+import { Check, CheckSquare, ChevronDown, ChevronRight, ExternalLink, Paperclip, Plus, Upload } from 'lucide-react';
 import { db, setSetting } from '@/lib/db';
 import type { Subject, Task } from '@/lib/types';
 import { useSetting, useSubjectMap, useSubjects, useTopicMap } from '@/lib/hooks';
@@ -186,55 +186,112 @@ export function TaskRow({
 }) {
   const t0 = today();
   const overdue = !!t.dueDate && t.dueDate < t0 && t.status !== 'done';
+  const subtasks = t.subtasks ?? [];
+  const doneSubtasks = subtasks.filter((st) => st.done).length;
+  const [expanded, setExpanded] = useState(false);
+
+  function toggleSubtask(subtaskId: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    const updated = subtasks.map((st) => (st.id === subtaskId ? { ...st, done: !st.done } : st));
+    const allDone = updated.length > 0 && updated.every((st) => st.done);
+    // If all subtasks are finished, offer smart progression: mark task done if previously todo/doing
+    db.tasks.update(t.id!, {
+      subtasks: updated,
+      status: allDone && t.status !== 'done' ? 'done' : (!allDone && t.status === 'done' ? 'todo' : t.status),
+    });
+  }
+
   return (
     <li
       role="button"
       tabIndex={0}
       onClick={() => onOpen(t)}
       onKeyDown={(e) => e.key === 'Enter' && onOpen(t)}
-      className={cn('flex cursor-pointer items-start gap-3 px-3 py-3 transition-colors first:rounded-t-lg last:rounded-b-lg hover:bg-accent', t.status === 'done' && 'opacity-55')}
+      className={cn('group block cursor-pointer px-3 py-3 transition-colors first:rounded-t-lg last:rounded-b-lg hover:bg-accent', t.status === 'done' && 'opacity-55')}
     >
-      <button
-        type="button"
-        aria-label={t.status === 'done' ? 'Mark not done' : 'Mark done'}
-        onClick={(e) => {
-          e.stopPropagation();
-          db.tasks.update(t.id!, { status: t.status === 'done' ? 'todo' : 'done' });
-        }}
-        className={cn('mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors', t.status === 'done' ? 'border-foreground bg-foreground text-background' : 'border-input hover:border-foreground/60')}
-      >
-        {t.status === 'done' && <Check className="h-3 w-3" strokeWidth={3} />}
-      </button>
-      <div className="min-w-0 flex-1">
-        <div className={cn('text-sm', t.status === 'done' && 'line-through')}>{t.title}</div>
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-          {showCourse && subject && (
-            <span className="flex items-center gap-1">
-              <SubjectDot color={subject.color} className="h-2 w-2" />
-              {subject.name}
-            </span>
-          )}
-          {topicName && <span>· {topicName}</span>}
-          {t.dueDate && (
-            <span className={cn(overdue && 'font-medium text-tag-red-fg')}>
-              · {formatDate(t.dueDate)} ({relativeDays(t.dueDate)})
-            </span>
-          )}
-          {(t.materialIds?.length ?? 0) + (t.links?.length ?? 0) > 0 && (
-            <span className="flex items-center gap-0.5" title="Attached materials and links">
-              <Paperclip className="h-3 w-3" />
-              {(t.materialIds?.length ?? 0) + (t.links?.length ?? 0)}
-            </span>
-          )}
+      <div className="flex items-start gap-3">
+        <button
+          type="button"
+          aria-label={t.status === 'done' ? 'Mark not done' : 'Mark done'}
+          onClick={(e) => {
+            e.stopPropagation();
+            db.tasks.update(t.id!, { status: t.status === 'done' ? 'todo' : 'done' });
+          }}
+          className={cn('mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors', t.status === 'done' ? 'border-foreground bg-foreground text-background' : 'border-input hover:border-foreground/60')}
+        >
+          {t.status === 'done' && <Check className="h-3 w-3" strokeWidth={3} />}
+        </button>
+        <div className="min-w-0 flex-1">
+          <div className={cn('text-sm', t.status === 'done' && 'line-through')}>{t.title}</div>
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            {showCourse && subject && (
+              <span className="flex items-center gap-1">
+                <SubjectDot color={subject.color} className="h-2 w-2" />
+                {subject.name}
+              </span>
+            )}
+            {topicName && <span>· {topicName}</span>}
+            {t.dueDate && (
+              <span className={cn(overdue && 'font-medium text-tag-red-fg')}>
+                · {formatDate(t.dueDate)} ({relativeDays(t.dueDate)})
+              </span>
+            )}
+            {subtasks.length > 0 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpanded((v) => !v);
+                }}
+                className="flex items-center gap-1 rounded bg-muted/60 px-1.5 py-0.5 font-medium text-foreground hover:bg-muted"
+                title={`${doneSubtasks}/${subtasks.length} subtasks completed`}
+              >
+                <CheckSquare className="h-3 w-3" />
+                <span className="tabular-nums">{doneSubtasks}/{subtasks.length}</span>
+                {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+              </button>
+            )}
+            {(t.materialIds?.length ?? 0) + (t.links?.length ?? 0) > 0 && (
+              <span className="flex items-center gap-0.5" title="Attached materials and links">
+                <Paperclip className="h-3 w-3" />
+                {(t.materialIds?.length ?? 0) + (t.links?.length ?? 0)}
+              </span>
+            )}
+          </div>
         </div>
+        {t.url && (
+          <a href={t.url} target="_blank" rel="noreferrer" aria-label="Open assignment" onClick={(e) => e.stopPropagation()} className="rounded p-1 hover:bg-accent">
+            <ExternalLink className="h-4 w-4 text-brand" />
+          </a>
+        )}
+        {t.status === 'doing' && <Badge variant="info">In progress</Badge>}
+        {t.priority === 'high' && t.status !== 'done' && <Badge variant="destructive">High</Badge>}
       </div>
-      {t.url && (
-        <a href={t.url} target="_blank" rel="noreferrer" aria-label="Open assignment" onClick={(e) => e.stopPropagation()} className="rounded p-1 hover:bg-accent">
-          <ExternalLink className="h-4 w-4 text-brand" />
-        </a>
+
+      {subtasks.length > 0 && expanded && (
+        <div className="mt-2.5 ml-8 space-y-1.5 border-l-2 border-muted pl-3 pt-1" onClick={(e) => e.stopPropagation()}>
+          {subtasks.map((st) => (
+            <div key={st.id} className="flex items-center gap-2 py-0.5 text-xs">
+              <button
+                type="button"
+                aria-label={st.done ? 'Mark subtask incomplete' : 'Mark subtask complete'}
+                onClick={(e) => toggleSubtask(st.id, e)}
+                className={cn(
+                  'flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border transition-colors',
+                  st.done
+                    ? 'border-foreground bg-foreground text-background'
+                    : 'border-input hover:border-foreground/60'
+                )}
+              >
+                {st.done && <Check className="h-2.5 w-2.5" strokeWidth={3} />}
+              </button>
+              <span className={cn('text-foreground/90', st.done && 'line-through text-muted-foreground')}>
+                {st.title}
+              </span>
+            </div>
+          ))}
+        </div>
       )}
-      {t.status === 'doing' && <Badge variant="info">In progress</Badge>}
-      {t.priority === 'high' && t.status !== 'done' && <Badge variant="destructive">High</Badge>}
     </li>
   );
 }

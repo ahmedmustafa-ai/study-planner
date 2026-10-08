@@ -6,4 +6,5 @@ dev-dist
 .env.*
 tokens.json
 sync-state.json
+*.tsbuildinfo
 

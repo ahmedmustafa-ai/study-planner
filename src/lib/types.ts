@@ -138,6 +138,12 @@ export interface Mistake {
   fixed: boolean;
 }
 
+export interface Subtask {
+  id: string;
+  title: string;
+  done: boolean;
+}
+
 export interface Task {
   id?: number;
   subjectId: number;
@@ -150,6 +156,7 @@ export interface Task {
   url?: string;   // e.g. the assignment page in Google Classroom
   materialIds?: number[]; // optional: materials from the same course connected to this task
   links?: string[];       // optional: extra links (Drive, Docs, YouTube…) attached to this task
+  subtasks?: Subtask[];   // checklist of actionable breakdown steps
   uid?: string;   // stable id from an outside source (Classroom) so re-syncing updates instead of duplicating
 }
 

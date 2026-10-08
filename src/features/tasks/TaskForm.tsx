@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { db } from '@/lib/db';
-import type { Priority, Task, TaskStatus } from '@/lib/types';
+import type { Priority, Subtask, Task, TaskStatus } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field } from '@/components/common';
@@ -10,6 +10,7 @@ import { toast } from '@/components/toast';
 import { addDays, cn, today } from '@/lib/utils';
 import { addTask } from './queries';
 import { TaskAttachments } from './TaskAttachments';
+import { TaskSubtasks } from './TaskSubtasks';
 
 const PRIORITIES: { value: Priority; label: string }[] = [
   { value: 'high', label: 'High' },
@@ -61,6 +62,7 @@ export function TaskForm({
   const [status, setStatus] = useState<TaskStatus>(initial?.status ?? 'todo');
   const [materialIds, setMaterialIds] = useState<number[]>(initial?.materialIds ?? []);
   const [links, setLinks] = useState<string[]>(initial?.links ?? []);
+  const [subtasks, setSubtasks] = useState<Subtask[]>(initial?.subtasks ?? []);
   const t0 = today();
 
   // Materials belong to a course, so changing the course clears the picked ones.
@@ -74,10 +76,30 @@ export function TaskForm({
     if (!pick.subjectId) return toast('Choose a course');
     if (!title.trim()) return toast('Add a title');
     if (initial?.id) {
-      await db.tasks.put({ ...initial, title: title.trim(), subjectId: pick.subjectId, topicId: pick.topicId, dueDate: due || undefined, priority, status, materialIds: materialIds.length ? materialIds : undefined, links: links.length ? links : undefined });
+      await db.tasks.put({
+        ...initial,
+        title: title.trim(),
+        subjectId: pick.subjectId,
+        topicId: pick.topicId,
+        dueDate: due || undefined,
+        priority,
+        status,
+        materialIds: materialIds.length ? materialIds : undefined,
+        links: links.length ? links : undefined,
+        subtasks: subtasks.length ? subtasks : undefined,
+      });
       toast('Task updated');
     } else {
-      await addTask({ subjectId: pick.subjectId, topicId: pick.topicId, title, dueDate: due, priority, materialIds, links });
+      await addTask({
+        subjectId: pick.subjectId,
+        topicId: pick.topicId,
+        title,
+        dueDate: due,
+        priority,
+        materialIds,
+        links,
+        subtasks,
+      });
       saveLastPick(pick);
       toast('Task added');
     }
@@ -114,6 +136,7 @@ export function TaskForm({
         <Segmented value={priority} options={PRIORITIES} onChange={setPriority} />
       </Field>
       <TaskAttachments subjectId={pick.subjectId} materialIds={materialIds} onMaterialIds={setMaterialIds} links={links} onLinks={setLinks} classroomUrl={initial?.url} />
+      <TaskSubtasks subtasks={subtasks} onChange={setSubtasks} />
       {initial && (
         <Field label="Status">
           <Segmented value={status} options={STATUSES} onChange={setStatus} />
