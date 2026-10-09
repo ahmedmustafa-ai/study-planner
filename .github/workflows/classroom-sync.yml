@@ -4,7 +4,13 @@ on:
   schedule:
     # Runs every 15 minutes automatically
     - cron: '*/15 * * * *'
-  workflow_dispatch: # Allows manual trigger from the GitHub Actions tab anytime
+  workflow_dispatch:
+    inputs:
+      test_notification:
+        description: 'Send a test notification to Telegram to verify setup'
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   sync:
@@ -45,6 +51,7 @@ jobs:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+          TEST_NOTIFICATION: ${{ github.event.inputs.test_notification || 'false' }}
         run: npm run sync-once
 
       # Ensure state file exists so cache action never fails on empty/first runs

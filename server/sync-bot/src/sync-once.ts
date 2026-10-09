@@ -19,8 +19,27 @@ async function runOnce() {
     process.exit(1);
   }
 
+  // Diagnostic logging for Telegram setup
+  console.log(`🤖 Telegram Bot Configured: ${Boolean(config.telegramToken)}`);
+  console.log(`💬 Telegram Chat ID Configured: ${Boolean(config.telegramChatId)} (length: ${config.telegramChatId.length})`);
+
   // Optional bot instance to send message via bot.api
   const bot = config.telegramToken ? new Bot(config.telegramToken) : null;
+
+  // If TEST_NOTIFICATION env var is set, send a test ping to verify Telegram connectivity
+  if (process.env.TEST_NOTIFICATION === 'true' && bot && config.telegramChatId) {
+    try {
+      console.log('📨 Sending test notification to Telegram...');
+      await bot.api.sendMessage(
+        config.telegramChatId,
+        '🚀 <b>Study Planner Sync Bot Connected!</b>\n\nTelegram notifications are active and working.',
+        { parse_mode: 'HTML' }
+      );
+      console.log('✅ Test notification sent successfully to Telegram!');
+    } catch (err: any) {
+      console.error('❌ Failed to send Telegram test message:', err.message || err);
+    }
+  }
 
   try {
     const summary = await performSync(bot);
