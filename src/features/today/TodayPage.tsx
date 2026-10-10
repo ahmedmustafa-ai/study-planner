@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Brain, CalendarClock, ClipboardPaste, CalendarPlus, ChevronDown, ChevronRight, ChevronUp, ExternalLink, FilePlus2, FolderPlus, HardDriveDownload, ListPlus, Megaphone, Settings, SlidersHorizontal, Sparkles } from 'lucide-react';
+import { Brain, CalendarClock, ClipboardPaste, CalendarPlus, ChevronDown, ChevronRight, ChevronUp, ExternalLink, FilePlus2, FolderPlus, ListPlus, Megaphone, Settings, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { db, setSetting } from '@/lib/db';
 import { useSetting, useSubjectMap } from '@/lib/hooks';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { DEADLINE_HORIZON_DAYS, MAX_NOW_TOPICS } from '@/config';
 import { addDaysISO, buildCalendarItems, filterItems, type CalItem } from '@/lib/algorithms/calendar';
 import { DEFAULT_HOME_LAYOUT, HOME_SECTION_INFO, moveSection, normalizeLayout, toggleSection, type HomeSection, type HomeSectionId } from '@/lib/algorithms/homeLayout';
 import { daysBetween, relativeDays } from '@/lib/utils';
+import type { Announcement } from '@/lib/types';
 import { StatusPill } from '@/features/subjects/StatusPill';
 import { setTopicStatus } from '@/features/subjects/topicActions';
 import { CalItemRow, ItemEditor } from '@/features/calendar/CalItemRow';
@@ -39,7 +40,7 @@ export function TodayPage() {
   const layout = useMemo(() => normalizeLayout(saved), [saved]);
   const [customize, setCustomize] = useState(false);
   const [editing, setEditing] = useState<CalItem | null>(null);
-  const recentAnnouncements = useLiveQuery(() => db.announcements.orderBy('date').reverse().limit(5).toArray(), []) ?? [];
+  const recentAnnouncements = useLiveQuery<Announcement[]>(() => db.announcements.orderBy('date').reverse().limit(5).toArray(), []) ?? [];
 
   const t0 = d?.t0 ?? '';
   const todayItems = useMemo(() => (calSrc && t0 ? filterItems(buildCalendarItems(calSrc, t0, t0), cal.filter) : []), [calSrc, t0, cal.filter]);
@@ -80,7 +81,6 @@ export function TodayPage() {
       const rows = [
         d.reviewDue && { to: '/review', icon: <CalendarClock />, text: 'Weekly review is due — 15 minutes to see progress and pick next focus.' },
         d.pending > 0 && { to: '/ai', icon: <Sparkles />, text: `${d.pending} AI session${d.pending > 1 ? 's' : ''} waiting for you to paste the Capture Block.` },
-        d.backupDue && { to: '/settings', icon: <HardDriveDownload />, text: 'Back up your data (one tap → Google Drive).' },
       ].filter(Boolean) as { to: string; icon: React.ReactNode; text: string }[];
       if (!rows.length) return null;
       return (

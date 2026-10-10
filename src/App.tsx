@@ -3,7 +3,6 @@ import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { DataRecoveryGate } from '@/components/DataRecoveryGate';
 import { ensureSeeded, looksWiped } from '@/lib/seed';
-import { runAutoBackup, startLiveBackup, maybeNudgeFolderLink } from '@/lib/autoBackup';
 import { startSync } from '@/lib/sync';
 import { autoClassroomSync } from '@/features/classroom/autoSync';
 import { toast } from '@/components/toast';
@@ -37,7 +36,6 @@ export default function App() {
   const [needsRecovery, setNeedsRecovery] = useState(false);
 
   useEffect(() => {
-    let stopLiveBackup: (() => void) | undefined;
     let stopSync: (() => void) | undefined;
     (async () => {
       try {
@@ -52,13 +50,6 @@ export default function App() {
         // Ask the browser not to evict this site's storage under disk pressure — best effort, silent either way.
         navigator.storage?.persist?.().catch(() => undefined);
 
-        // None of this must ever block the app from opening — each runs independently and swallows its own errors.
-        runAutoBackup()
-          .then((r) => {
-            if (r.ran) toast(r.how === 'folder' ? `Backed up automatically to "${r.folderName}"` : 'Backed up automatically (saved to Downloads)');
-          })
-          .catch(() => undefined);
-
         autoClassroomSync()
           .then((r) => {
             if (!r.ran) return;
@@ -71,20 +62,12 @@ export default function App() {
           })
           .catch(() => undefined);
 
-        maybeNudgeFolderLink()
-          .then((should) => {
-            if (should) toast('Link a backup folder in Settings → Backup — it\'s the safest way to protect your data.');
-          })
-          .catch(() => undefined);
-
-        stopLiveBackup = startLiveBackup();
         stopSync = startSync();
       } catch (e) {
         setError((e as Error).message);
       }
     })();
     return () => {
-      stopLiveBackup?.();
       stopSync?.();
     };
   }, []);

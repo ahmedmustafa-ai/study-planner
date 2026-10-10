@@ -4,7 +4,6 @@ import { detectWeakSpots } from '@/lib/algorithms/weakSpots';
 import { rankPriorities } from '@/lib/algorithms/priorities';
 import { dueRevisits } from '@/lib/algorithms/revisit';
 import { WEEKLY_REVIEW_DAYS } from '@/config';
-import { backupDue } from '@/lib/algorithms/nudges';
 import { addDays, daysBetween, today } from '@/lib/utils';
 import type { Subject, Task, Topic } from '@/lib/types';
 
@@ -14,7 +13,7 @@ const byOrder = (a: Subject, b: Subject) => (a.order ?? 999) - (b.order ?? 999) 
 export function useDashboard() {
   const t0 = today();
   return useLiveQuery(async () => {
-    const [subjects, topics, mistakes, scores, tasks, milestones, dueTerms, pending, lastReview, lastBackup, firstRun, materials, sessions] = await Promise.all([
+    const [subjects, topics, mistakes, scores, tasks, milestones, dueTerms, pending, lastReview, firstRun, materials, sessions] = await Promise.all([
       db.subjects.toArray(),
       db.topics.toArray(),
       db.mistakes.toArray(),
@@ -24,7 +23,6 @@ export function useDashboard() {
       db.terms.where('nextReview').belowOrEqual(t0).count(),
       db.aiSessions.filter((s) => !s.returnRaw).count(),
       db.weeklyReviews.orderBy('weekStart').last(),
-      db.settings.get('lastBackup'),
       db.settings.get('firstRun'),
       db.sources.toArray(),
       db.studySessions.where("date").aboveOrEqual(addDays(t0, -6)).toArray(),
@@ -57,7 +55,6 @@ export function useDashboard() {
       dueTerms,
       pending,
       reviewDue: !reviewAnchor || daysBetween(reviewAnchor, t0) >= WEEKLY_REVIEW_DAYS,
-      backupDue: backupDue(lastBackup ? String(lastBackup.value) : undefined, firstRun ? String(firstRun.value) : undefined, t0),
     };
   }, [t0]);
 }
