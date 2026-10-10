@@ -4,6 +4,7 @@
 import { db, getSetting, setSetting } from './db';
 import { supabase, supabaseConfigured } from './supabase';
 import { FK_FIELDS, SYNCED_TABLES, fkIdsToUuids, fkUuidsToIds, incomingWins, type Row, type SyncedTable } from './algorithms/sync';
+import { getConnectedGoogleUser, syncWithGoogleDrive } from './gdrive';
 
 export const syncAvailable = supabaseConfigured;
 
@@ -151,14 +152,29 @@ async function pullAll(userId: string) {
 let syncing = false;
 
 export async function runSync(): Promise<'ok' | 'skipped' | 'offline'> {
-  if (!supabase || !navigator.onLine) return 'offline';
-  const session = await getSession();
-  if (!session) return 'skipped';
+  if (!navigator.onLine) return 'offline';
   if (syncing) return 'skipped';
   syncing = true;
   try {
-    for (const table of SYNCED_TABLES) await pushTable(table, session.user.id);
-    await pullAll(session.user.id);
+    // 1. If Google Drive Sync is linked, sync with Google Drive appDataFolder
+    try {
+      const googleUser = await getConnectedGoogleUser();
+      if (googleUser) {
+        await syncWithGoogleDrive({ silent: true });
+      }
+    } catch (gErr) {
+      console.warn('Google Drive sync error:', gErr);
+    }
+
+    // 2. If Supabase is configured and logged in, sync with Supabase
+    if (supabase) {
+      const session = await getSession();
+      if (session) {
+        for (const table of SYNCED_TABLES) await pushTable(table, session.user.id);
+        await pullAll(session.user.id);
+      }
+    }
+
     await setSetting('sync.lastRun', nowIso());
     return 'ok';
   } finally {
@@ -168,7 +184,6 @@ export async function runSync(): Promise<'ok' | 'skipped' | 'offline'> {
 
 /** Runs sync now, then on an interval and whenever the tab comes back online/focused. Returns a stop function. */
 export function startSync(intervalMs = 30_000): () => void {
-  if (!supabase) return () => undefined;
   void runSync();
   const timer = window.setInterval(() => void runSync(), intervalMs);
   const onFocusOrOnline = () => void runSync();

@@ -12,30 +12,7 @@ export const CLASSROOM_SCOPES = [
 const GSI_URL = 'https://accounts.google.com/gsi/client';
 const API = 'https://classroom.googleapis.com/v1';
 
-interface TokenResponse {
-  access_token?: string;
-  error?: string;
-  error_description?: string;
-}
-interface TokenClient {
-  requestAccessToken(o?: { prompt?: string }): void;
-}
-declare global {
-  interface Window {
-    google?: {
-      accounts?: {
-        oauth2?: {
-          initTokenClient(c: {
-            client_id: string;
-            scope: string;
-            callback: (r: TokenResponse) => void;
-            error_callback?: (e: { type?: string; message?: string }) => void;
-          }): TokenClient;
-        };
-      };
-    };
-  }
-}
+
 
 export type GoogleErrorKind = 'blocked' | 'closed' | 'network' | 'setup' | 'api';
 export class GoogleError extends Error {
